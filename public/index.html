@@ -45,12 +45,23 @@
     .hidden{display:none}
     .test-line{font-family:ui-monospace,monospace;font-size:12.5px;padding:3px 0}
     .t-ok{color:var(--ok)} .t-bad{color:var(--bad)}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:13px;color:var(--muted)}
+    .topbar a{color:var(--accent);text-decoration:none}
+    .qcm-opt{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 12px;border-radius:9px;
+      border:1px solid var(--border);background:#0b0d12;color:var(--text);cursor:pointer;font-size:14px}
+    .qcm-opt:hover{border-color:var(--accent)}
+    .qcm-opt.good{border-color:var(--ok);background:rgba(74,222,128,.12)}
+    .qcm-opt.bad{border-color:var(--bad);background:rgba(248,113,113,.12)}
+    .qcm-why{margin-top:10px;font-size:13.5px;color:var(--muted)}
     footer{margin-top:36px;color:var(--muted);font-size:12px;text-align:center}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <span class="badge"><span class="dot"></span> coach en ligne</span>
+    <div class="topbar">
+      <span class="badge"><span class="dot"></span> coach en ligne</span>
+      <span id="who"></span>
+    </div>
     <h1>Coach Agent</h1>
     <p class="lead">Soumets ton code Python : l'agent diagnostique ta vraie lacune et te guide
       — sans te donner la reponse.</p>
@@ -81,6 +92,12 @@
           <h4>Mini-exo cible</h4>
           <p id="exoenonce"></p>
           <p id="exoexemple" style="color:var(--accent)"></p>
+        </div>
+        <div class="section hidden" id="qcmbox" style="border-color:var(--accent)">
+          <h4>Petit QCM — vérifie ta compréhension</h4>
+          <p id="qcmq"></p>
+          <div id="qcmopts"></div>
+          <div class="qcm-why hidden" id="qcmwhy"></div>
         </div>
       </div>
     </div>
@@ -165,6 +182,44 @@ function renderResult(res) {
     document.getElementById('exoenonce').textContent = res.coach.mini_exo_enonce;
     document.getElementById('exoexemple').textContent = res.coach.mini_exo_exemple || '';
   } else eb.classList.add('hidden');
+
+  renderQcm(res.coach && res.coach.qcm);
+}
+
+function renderQcm(qcm) {
+  const box = document.getElementById('qcmbox');
+  const why = document.getElementById('qcmwhy');
+  if (!qcm || !qcm.options || !qcm.options.length) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  why.classList.add('hidden');
+  document.getElementById('qcmq').textContent = qcm.question;
+  const opts = document.getElementById('qcmopts');
+  opts.innerHTML = '';
+  qcm.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'qcm-opt';
+    b.textContent = opt;
+    b.onclick = () => {
+      // on revele seulement APRES la reponse, sans donner la solution avant
+      Array.from(opts.children).forEach((c, j) => {
+        c.disabled = true;
+        if (j === qcm.correct_index) c.classList.add('good');
+        else if (j === i) c.classList.add('bad');
+      });
+      why.classList.remove('hidden');
+      why.textContent = (i === qcm.correct_index ? '✅ Bonne réponse. ' : '❌ Pas tout à fait. ') + (qcm.pourquoi || '');
+    };
+    opts.appendChild(b);
+  });
+}
+
+async function loadMe() {
+  try {
+    const me = await (await fetch('/api/me')).json();
+    const who = document.getElementById('who');
+    if (me.nom) who.innerHTML = '👤 ' + me.nom + ' · <a href="/logout">déconnexion</a>';
+    else if (me.role === 'teacher') who.innerHTML = '👨‍🏫 prof · <a href="/teacher">cockpit</a> · <a href="/logout">déconnexion</a>';
+  } catch (e) {}
 }
 
 async function poll(id, tries=0) {
@@ -197,6 +252,7 @@ document.getElementById('go').addEventListener('click', async () => {
   poll(j.soumission_id);
 });
 
+loadMe();
 loadExos();
 </script>
 </body>
