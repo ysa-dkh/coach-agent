@@ -4,15 +4,47 @@ require('dotenv').config();
 const { GoogleGenAI, Type } = require('@google/genai');
 const { MISCONCEPTIONS, LABELS } = require('./taxonomy');
 
-const API_KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Pool de cles : GEMINI_API_KEYS (séparées par des virgules) OU GEMINI_API_KEY.
+// Bascule auto sur 429/quota vers la cle suivante (cles de projets differents = quotas cumules).
+const RAW_KEYS = (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '')
+  .split(',').map((k) => k.trim()).filter(Boolean);
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
 
-let ai = null;
-if (API_KEY) ai = new GoogleGenAI({ apiKey: API_KEY });
+const clients = RAW_KEYS.map((key) => ({ key, ai: new GoogleGenAI({ apiKey: key }), cooldownUntil: 0 }));
+let rr = 0; // curseur round-robin (repartit la charge entre les cles)
 
-function requireAi() {
-  if (!ai) throw new Error('GEMINI_API_KEY manquant.');
-  return ai;
+function hasGemini() { return clients.length > 0; }
+
+function isQuotaError(e) {
+  const m = ((e && e.message) || '').toLowerCase();
+  return Boolean(e && (e.status === 429 || m.includes('429') || m.includes('resource_exhausted') || m.includes('quota') || m.includes('rate limit')));
+}
+
+// Appel Gemini resilient : round-robin + saut des cles en cooldown + bascule sur 429.
+async function generate(params) {
+  if (!clients.length) throw new Error('Aucune cle Gemini (GEMINI_API_KEYS / GEMINI_API_KEY).');
+  const now = Date.now();
+  const order = [];
+  for (let i = 0; i < clients.length; i++) order.push(clients[(rr + i) % clients.length]);
+  rr = (rr + 1) % clients.length;
+
+  let lastErr = null;
+  // 2 passes : la 1ere respecte les cooldowns, la 2e les force (apres une pause
+  // qui laisse passer un 503/pic de surcharge transitoire).
+  for (let pass = 0; pass < 2; pass++) {
+    for (const c of order) {
+      if (pass === 0 && c.cooldownUntil > Date.now()) continue;
+      try {
+        return await c.ai.models.generateContent(params);
+      } catch (e) {
+        lastErr = e;
+        if (isQuotaError(e)) c.cooldownUntil = Date.now() + 60000; // quota : repos 1 min
+        // on bascule quelle que soit l'erreur (cle morte, quota, 503...)
+      }
+    }
+    if (pass === 0) await new Promise((r) => setTimeout(r, 1200));
+  }
+  throw lastErr || new Error('Echec Gemini (toutes les cles epuisees).');
 }
 
 // Resume compact des resultats de tests pour ancrer le diagnostic.
@@ -34,7 +66,6 @@ function formatTests(resultats) {
 
 // ---------------- Agent Diagnostic ----------------
 async function diagnose({ enonce, code, resultats }) {
-  const client = requireAi();
   const taxoList = MISCONCEPTIONS.map((m) => `- ${m} : ${LABELS[m]}`).join('\n');
 
   const prompt = `Tu es un agent de DIAGNOSTIC pedagogique pour du code Python d'eleve.
@@ -64,7 +95,7 @@ Regles :
 - "explication" : 1 phrase interne, factuelle, qui cite ce que montrent les tests.
 Reponds en JSON.`;
 
-  const response = await client.models.generateContent({
+  const response = await generate({
     model: MODEL,
     contents: prompt,
     config: {
@@ -90,7 +121,6 @@ Reponds en JSON.`;
 // ---------------- Agent Coach (remediation) ----------------
 // candidates = [{ id, titre, contenu }]
 async function coach({ misconception, niveau, enonce, candidates }) {
-  const client = requireAi();
   const sections = candidates
     .map((c) => `### ${c.id} - ${c.titre}\n${c.contenu}`)
     .join('\n\n');
@@ -114,7 +144,7 @@ Produis :
 - "mini_exo_exemple" : un exemple d'entree/sortie attendu pour ce mini-exo (sans donner le code).
 Reponds en JSON.`;
 
-  const response = await client.models.generateContent({
+  const response = await generate({
     model: MODEL,
     contents: prompt,
     config: {
@@ -148,8 +178,7 @@ Reponds en JSON.`;
 
 // Helper generique : prompt -> JSON (pour les agents prof). Renvoie null si echec.
 async function genJSON(prompt, responseSchema, temperature = 0.3) {
-  if (!ai) throw new Error('GEMINI_API_KEY manquant.');
-  const response = await ai.models.generateContent({
+  const response = await generate({
     model: MODEL,
     contents: prompt,
     config: { temperature, responseMimeType: 'application/json', responseSchema },
@@ -157,4 +186,4 @@ async function genJSON(prompt, responseSchema, temperature = 0.3) {
   return JSON.parse(response.text);
 }
 
-module.exports = { diagnose, coach, formatTests, genJSON, Type, hasGemini: () => Boolean(ai) };
+module.exports = { diagnose, coach, formatTests, genJSON, Type, hasGemini, keyCount: () => clients.length };
