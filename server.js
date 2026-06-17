@@ -5,6 +5,7 @@ const path = require('path');
 const redis = require('./src/redis');
 const db = require('./src/db');
 const { startLoop } = require('./src/worker');
+const { registerTeacherRoutes } = require('./src/teacher/routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,9 @@ app.get('/redis-status', (req, res) => res.json({
   configured: redis.isConfigured(),
   ready: redis.isReady(),
 }));
+
+// ---- Cockpit prof (dashboard + API + rapports) ----
+registerTeacherRoutes(app);
 
 // ---- Liste des exos (pour le menu deroulant du front) ----
 app.get('/api/exos', async (req, res) => {

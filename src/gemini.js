@@ -96,7 +96,7 @@ async function coach({ misconception, niveau, enonce, candidates }) {
     .join('\n\n');
   const ids = candidates.map((c) => c.id);
 
-  const prompt = `Tu es un agent COACH. Tu aides un eleve SANS jamais donner la reponse / le code solution.
+  const prompt = `Tu es un agent COACH. REGLE ABSOLUE : tu ne donnes JAMAIS la solution ni le code corrige, et tu n'EXPLIQUES PAS comment resoudre l'exercice. Ton role = RENVOYER l'eleve a la bonne partie du cours et le faire travailler lui-meme (rappel actif).
 L'eleve a la misconception : "${misconception}" (${LABELS[misconception] || misconception}).
 Son niveau estime est ${niveau} (0 = debutant, 1 = avance) -> adapte le ton.
 
@@ -107,9 +107,10 @@ SECTIONS DE COURS CANDIDATES (choisis la PLUS pertinente, par son id) :
 ${sections}
 
 Produis :
-- "section_id" : l'id de la meilleure section parmi : ${ids.join(', ')}.
-- "hint" : 2-3 phrases qui orientent vers la bonne piste SANS donner la solution ni le code corrige. Pose une question ou rappelle le principe.
-- "mini_exo_enonce" : un mini-exercice court et cible SUR CETTE misconception precise (different de l'enonce d'origine, plus simple).
+- "section_id" : l'id de la meilleure section parmi : ${ids.join(', ')}. C'est CA qu'on montre a l'eleve, en priorite.
+- "hint" : 1 a 2 phrases MAX. PAS d'explication de la solution. Juste de quoi l'orienter + l'inviter a relire la section. Tu peux poser UNE question ouverte.
+- "qcm" : un QCM de RAPPEL sur la NOTION du cours (pas sur la solution de l'enonce), pour que l'eleve verifie sa comprehension. Objet { "question": court, "options": 3 a 4 propositions, "correct_index": index 0-based de la bonne option, "pourquoi": 1 phrase expliquant la bonne reponse (montree seulement APRES que l'eleve a repondu) }. Le QCM ne doit pas reveler la solution du probleme initial.
+- "mini_exo_enonce" : un mini-exercice court et cible SUR CETTE notion (different de l'enonce d'origine, plus simple).
 - "mini_exo_exemple" : un exemple d'entree/sortie attendu pour ce mini-exo (sans donner le code).
 Reponds en JSON.`;
 
@@ -124,10 +125,20 @@ Reponds en JSON.`;
         properties: {
           section_id: { type: Type.STRING, enum: ids },
           hint: { type: Type.STRING },
+          qcm: {
+            type: Type.OBJECT,
+            properties: {
+              question: { type: Type.STRING },
+              options: { type: Type.ARRAY, items: { type: Type.STRING } },
+              correct_index: { type: Type.NUMBER },
+              pourquoi: { type: Type.STRING },
+            },
+            required: ['question', 'options', 'correct_index', 'pourquoi'],
+          },
           mini_exo_enonce: { type: Type.STRING },
           mini_exo_exemple: { type: Type.STRING },
         },
-        required: ['section_id', 'hint', 'mini_exo_enonce', 'mini_exo_exemple'],
+        required: ['section_id', 'hint', 'qcm', 'mini_exo_enonce', 'mini_exo_exemple'],
       },
     },
   });
@@ -135,4 +146,15 @@ Reponds en JSON.`;
   return JSON.parse(response.text);
 }
 
-module.exports = { diagnose, coach, formatTests };
+// Helper generique : prompt -> JSON (pour les agents prof). Renvoie null si echec.
+async function genJSON(prompt, responseSchema, temperature = 0.3) {
+  if (!ai) throw new Error('GEMINI_API_KEY manquant.');
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: prompt,
+    config: { temperature, responseMimeType: 'application/json', responseSchema },
+  });
+  return JSON.parse(response.text);
+}
+
+module.exports = { diagnose, coach, formatTests, genJSON, Type, hasGemini: () => Boolean(ai) };
