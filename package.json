@@ -1,16 +1,21 @@
 {
   "name": "coach-agent",
   "version": "1.0.0",
-  "description": "Coach Agent - Express app with Redis on Scalingo",
+  "description": "Agent coach pedagogique - diagnostic de misconceptions + remediation (Express + Redis + Supabase + Gemini)",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "worker": "node src/worker.js",
+    "migrate": "node src/migrate.js"
   },
   "engines": {
     "node": "20.x"
   },
   "dependencies": {
+    "@google/genai": "^2.8.0",
+    "dotenv": "^17.4.2",
     "express": "^4.19.2",
+    "pg": "^8.21.0",
     "redis": "^4.7.0"
   }
 }

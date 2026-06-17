@@ -6,111 +6,198 @@
   <title>Coach Agent</title>
   <style>
     :root {
-      --bg: #0b0d12;
-      --panel: #12151c;
-      --border: #1f2430;
-      --text: #e6e8ef;
-      --muted: #8a91a3;
-      --accent: #7c5cff;
-      --accent-soft: rgba(124, 92, 255, 0.15);
-      --ok: #4ade80;
+      --bg:#0b0d12; --panel:#12151c; --border:#1f2430; --text:#e6e8ef;
+      --muted:#8a91a3; --accent:#7c5cff; --accent-soft:rgba(124,92,255,.15);
+      --ok:#4ade80; --warn:#fbbf24; --bad:#f87171;
     }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
-      min-height: 100vh;
-    }
-    .wrap {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 64px 24px;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 8px var(--ok);
-    }
-    h1 {
-      font-size: 40px;
-      font-weight: 700;
-      margin: 20px 0 12px;
-      letter-spacing: -0.02em;
-    }
-    p.lead {
-      color: var(--muted);
-      font-size: 17px;
-      line-height: 1.6;
-      margin: 0 0 36px;
-    }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 22px 24px;
-      margin-bottom: 16px;
-    }
-    .card h3 {
-      margin: 0 0 6px;
-      font-size: 15px;
-      color: var(--text);
-    }
-    .card code {
-      color: var(--accent);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 13px;
-    }
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    footer {
-      margin-top: 40px;
-      color: var(--muted);
-      font-size: 12px;
-      text-align: center;
-    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif}
+    .wrap{max-width:860px;margin:0 auto;padding:48px 24px}
+    .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;
+      background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;
+      letter-spacing:.04em;text-transform:uppercase}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+    h1{font-size:34px;font-weight:700;margin:18px 0 6px;letter-spacing:-.02em}
+    p.lead{color:var(--muted);font-size:16px;line-height:1.6;margin:0 0 28px}
+    label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+    select,textarea{width:100%;background:var(--panel);border:1px solid var(--border);
+      color:var(--text);border-radius:10px;padding:12px 14px;font-size:14px;margin-bottom:16px}
+    textarea{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-height:200px;resize:vertical}
+    button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 22px;
+      font-size:15px;font-weight:600;cursor:pointer}
+    button:disabled{opacity:.5;cursor:default}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+      padding:20px 22px;margin-bottom:14px}
+    .card h3{margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+    .pill{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}
+    .pill.ok{background:rgba(74,222,128,.15);color:var(--ok)}
+    .pill.warn{background:rgba(251,191,36,.15);color:var(--warn)}
+    .pill.bad{background:rgba(248,113,113,.15);color:var(--bad)}
+    .pill.muted{background:#1f2430;color:var(--muted)}
+    pre{background:#0b0d12;border:1px solid var(--border);border-radius:10px;padding:12px;
+      overflow:auto;font-size:12.5px;color:var(--muted);margin:0}
+    .msg{font-size:15px;line-height:1.6;white-space:pre-wrap}
+    .section{border-left:3px solid var(--accent);padding-left:14px;margin-top:10px}
+    .section h4{margin:0 0 4px;font-size:14px}
+    .section p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
+    .hidden{display:none}
+    .test-line{font-family:ui-monospace,monospace;font-size:12.5px;padding:3px 0}
+    .t-ok{color:var(--ok)} .t-bad{color:var(--bad)}
+    footer{margin-top:36px;color:var(--muted);font-size:12px;text-align:center}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <span class="badge"><span class="dot"></span> en ligne</span>
+    <span class="badge"><span class="dot"></span> coach en ligne</span>
     <h1>Coach Agent</h1>
-    <p class="lead">
-      Une application Node.js / Express minimaliste, déployée sur Scalingo avec Redis.
-      Utilisez les endpoints ci-dessous pour vérifier l'état du service.
-    </p>
+    <p class="lead">Soumets ton code Python : l'agent diagnostique ta vraie lacune et te guide
+      — sans te donner la reponse.</p>
 
-    <div class="card">
-      <h3>Health check</h3>
-      <p><code>GET /health</code> — renvoie <code>{ "status": "ok" }</code></p>
+    <label for="exo">Exercice</label>
+    <select id="exo"></select>
+    <p id="enonce" class="lead" style="margin-bottom:16px"></p>
+
+    <label for="code">Ton code</label>
+    <textarea id="code" spellcheck="false" placeholder="def ma_fonction(...):\n    ..."></textarea>
+    <button id="go">Soumettre</button>
+
+    <div id="result" class="hidden" style="margin-top:28px">
+      <div class="card">
+        <h3>Resultat des tests</h3>
+        <div class="row" id="testsummary"></div>
+        <div id="testlines"></div>
+      </div>
+      <div class="card">
+        <h3>Diagnostic</h3>
+        <div class="row" id="diagrow"></div>
+        <div class="msg" id="message"></div>
+        <div class="section hidden" id="sectionbox">
+          <h4 id="sectitle"></h4>
+          <p id="seccontent"></p>
+        </div>
+        <div class="section hidden" id="exobox" style="border-color:var(--warn)">
+          <h4>Mini-exo cible</h4>
+          <p id="exoenonce"></p>
+          <p id="exoexemple" style="color:var(--accent)"></p>
+        </div>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Redis status</h3>
-      <p><code>GET /redis-status</code> — état de la connexion Redis</p>
-    </div>
-
-    <footer>© Coach Agent</footer>
+    <footer>© Coach Agent — feedback formatif a l'echelle</footer>
   </div>
+
+<script>
+let EXOS = [];
+
+async function loadExos() {
+  const r = await fetch('/api/exos');
+  const j = await r.json();
+  EXOS = j.exos || [];
+  const sel = document.getElementById('exo');
+  sel.innerHTML = '';
+  EXOS.forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.id; o.textContent = e.id;
+    sel.appendChild(o);
+  });
+  showEnonce();
+}
+function showEnonce() {
+  const id = document.getElementById('exo').value;
+  const e = EXOS.find(x => x.id === id);
+  document.getElementById('enonce').textContent = e ? e.enonce : '';
+}
+document.getElementById('exo').addEventListener('change', showEnonce);
+
+function pill(text, cls) { return `<span class="pill ${cls}">${text}</span>`; }
+
+function renderTests(t) {
+  const sum = document.getElementById('testsummary');
+  const lines = document.getElementById('testlines');
+  if (!t || t.available === false) {
+    sum.innerHTML = pill('pas de tests executes', 'muted');
+    lines.innerHTML = '';
+    return;
+  }
+  if (t.load_error) {
+    sum.innerHTML = pill('erreur de chargement', 'bad');
+    lines.innerHTML = '<div class="test-line t-bad">' + t.load_error + '</div>';
+    return;
+  }
+  const all = t.passed === t.total;
+  sum.innerHTML = pill(`${t.passed}/${t.total} tests`, all ? 'ok' : 'bad');
+  lines.innerHTML = (t.results || []).map(r => {
+    const got = r.error ? 'ERREUR ' + r.error : JSON.stringify(r.got);
+    return `<div class="test-line ${r.passed?'t-ok':'t-bad'}">${r.passed?'✓':'✗'} `
+      + `f(${JSON.stringify(r.args).slice(1,-1)}) = ${got} `
+      + (r.passed?'':`(attendu ${JSON.stringify(r.expected)})`) + '</div>';
+  }).join('');
+}
+
+function severeCls(s){ return s==='triviale'?'ok':s==='bloquante'?'bad':'warn'; }
+
+function renderResult(res) {
+  document.getElementById('result').classList.remove('hidden');
+  renderTests(res.tests);
+
+  const d = res.diagnostic || {};
+  const drow = document.getElementById('diagrow');
+  drow.innerHTML = pill(d.misconception || '?', d.misconception==='aucune_misconception'?'ok':'warn')
+    + pill('severite: ' + (d.severite||'?'), severeCls(d.severite))
+    + pill('confiance: ' + Math.round((d.confiance||0)*100) + '%', (d.confiance>=0.6?'ok':'muted'))
+    + pill('decision: ' + (res.decision||'?'), 'muted')
+    + (res.bloque ? pill('BLOCAGE detecte', 'bad') : '');
+
+  document.getElementById('message').textContent = res.message || '';
+
+  const sb = document.getElementById('sectionbox');
+  if (res.section) {
+    sb.classList.remove('hidden');
+    document.getElementById('sectitle').textContent = '📘 ' + res.section.titre;
+    document.getElementById('seccontent').textContent = res.section.contenu;
+  } else sb.classList.add('hidden');
+
+  const eb = document.getElementById('exobox');
+  if (res.coach && res.coach.mini_exo_enonce && res.decision === 'mini_exo') {
+    eb.classList.remove('hidden');
+    document.getElementById('exoenonce').textContent = res.coach.mini_exo_enonce;
+    document.getElementById('exoexemple').textContent = res.coach.mini_exo_exemple || '';
+  } else eb.classList.add('hidden');
+}
+
+async function poll(id, tries=0) {
+  const r = await fetch('/api/result/' + id);
+  const res = await r.json();
+  if (res.status === 'done') { renderResult(res); enable(); return; }
+  if (res.status === 'error') {
+    document.getElementById('result').classList.remove('hidden');
+    document.getElementById('message').textContent = 'Erreur: ' + res.message;
+    enable(); return;
+  }
+  if (tries > 40) { document.getElementById('message').textContent = 'Timeout.'; enable(); return; }
+  setTimeout(() => poll(id, tries+1), 800);
+}
+
+function enable(){ const b=document.getElementById('go'); b.disabled=false; b.textContent='Soumettre'; }
+
+document.getElementById('go').addEventListener('click', async () => {
+  const b = document.getElementById('go');
+  b.disabled = true; b.textContent = 'Analyse en cours...';
+  const exo_id = document.getElementById('exo').value;
+  const code = document.getElementById('code').value;
+  const r = await fetch('/api/submit', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ eleve_id:'demo', exo_id, code })
+  });
+  const j = await r.json();
+  if (j.error) { document.getElementById('result').classList.remove('hidden');
+    document.getElementById('message').textContent = 'Erreur: ' + j.error; enable(); return; }
+  poll(j.soumission_id);
+});
+
+loadExos();
+</script>
 </body>
 </html>
